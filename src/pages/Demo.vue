@@ -147,12 +147,13 @@
           </button>
           <div v-if="share.link" class="rounded-lg border border-primary/20 bg-primary/5 p-4">
             <p class="text-xs font-semibold text-foreground/60 uppercase mb-2">Enlace generado</p>
-            <router-link :to="share.link.replace(window.location.origin, '')" class="text-primary font-mono text-xs underline break-all">{{ share.link }}</router-link>
+            <!-- Use computed property to avoid TypeScript error -->
+            <router-link :to="getSharePath" class="text-primary font-mono text-xs underline break-all">{{ share.link }}</router-link>
             <p class="text-xs text-foreground/60 mt-3">📌 Demo local. El enlace funcionará en este dispositivo.</p>
           </div>
         </div>
         <div class="p-4 border-t border-primary/10 bg-primary/5 flex justify-end gap-2">
-          <button @click="share.open=false" class="inline-flex items-center justify-center rounded-lg h-10 px-6 border border-input bg-background hover:bg-accent text-foreground font-semibold transition-colors">
+          <button @click="share.open = false" class="inline-flex items-center justify-center rounded-lg h-10 px-6 border border-input bg-background hover:bg-accent text-foreground font-semibold transition-colors">
             Cerrar
           </button>
         </div>
@@ -172,31 +173,61 @@ const STORAGE_KEY = 'docucloud_docs_v1'
 const docs = ref<StoredDoc[]>([])
 const fileInput = ref<HTMLInputElement | null>(null)
 
-try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) docs.value = JSON.parse(raw) } catch {}
+try {
+  const raw = localStorage.getItem(STORAGE_KEY)
+  if (raw) docs.value = JSON.parse(raw)
+} catch {}
+
 watch(docs, (v) => localStorage.setItem(STORAGE_KEY, JSON.stringify(v)), { deep: true })
 
-const q = ref(''); const categoria = ref(''); const cliente = ref(''); const fechaDesde = ref(''); const fechaHasta = ref('')
+const q = ref('')
+const categoria = ref('')
+const cliente = ref('')
+const fechaDesde = ref('')
+const fechaHasta = ref('')
 
-function bytes(n: number) { const units = ['B','KB','MB','GB']; let i=0,v=n; while(v>1024&&i<units.length-1){v/=1024;i++;} return `${v.toFixed(1)} ${units[i]}` }
+function bytes(n: number) {
+  const units = ['B', 'KB', 'MB', 'GB']
+  let i = 0, v = n
+  while (v > 1024 && i < units.length - 1) {
+    v /= 1024
+    i++
+  }
+  return `${v.toFixed(1)} ${units[i]}`
+}
 
-function setTags(d: StoredDoc, str: string) { d.meta.etiquetas = str.split(',').map(s=>s.trim()).filter(Boolean) }
+function setTags(d: StoredDoc, str: string) {
+  d.meta.etiquetas = str.split(',').map((s) => s.trim()).filter(Boolean)
+}
 
-const filtered = computed(() => docs.value.filter((d) => {
-  const qok = !q.value || d.name.toLowerCase().includes(q.value.toLowerCase()) || (d.meta.etiquetas||[]).some(e=>e.toLowerCase().includes(q.value.toLowerCase()))
-  const cok = !categoria.value || d.meta.categoria === categoria.value
-  const clok = !cliente.value || (d.meta.cliente||'').toLowerCase().includes(cliente.value.toLowerCase())
-  const date = new Date(d.meta.fecha||d.createdAt).getTime()
-  const dok = !fechaDesde.value || date >= new Date(fechaDesde.value).getTime()
-  const hok = !fechaHasta.value || date <= new Date(fechaHasta.value).getTime()
-  return qok && cok && clok && dok && hok
-}))
+const filtered = computed(() =>
+  docs.value.filter((d) => {
+    const qok =
+      !q.value ||
+      d.name.toLowerCase().includes(q.value.toLowerCase()) ||
+      (d.meta.etiquetas || []).some((e) => e.toLowerCase().includes(q.value.toLowerCase()))
+    const cok = !categoria.value || d.meta.categoria === categoria.value
+    const clok = !cliente.value || (d.meta.cliente || '').toLowerCase().includes(cliente.value.toLowerCase())
+    const date = new Date(d.meta.fecha || d.createdAt).getTime()
+    const dok = !fechaDesde.value || date >= new Date(fechaDesde.value).getTime()
+    const hok = !fechaHasta.value || date <= new Date(fechaHasta.value).getTime()
+    return qok && cok && clok && dok && hok
+  })
+)
 
 async function fileToDataUrl(file: File) {
-  return await new Promise<string>((resolve, reject) => { const r = new FileReader(); r.onload=()=>resolve(String(r.result)); r.onerror=reject; r.readAsDataURL(file) })
+  return await new Promise<string>((resolve, reject) => {
+    const r = new FileReader()
+    r.onload = () => resolve(String(r.result))
+    r.onerror = reject
+    r.readAsDataURL(file)
+  })
 }
 
 async function onUpload(ev: Event) {
-  const input = ev.target as HTMLInputElement; const files = input.files; if (!files) return
+  const input = ev.target as HTMLInputElement
+  const files = input.files
+  if (!files) return
   const list: StoredDoc[] = []
   for (const file of Array.from(files)) {
     if (file.size > 2 * 1024 * 1024) continue
@@ -208,13 +239,21 @@ async function onUpload(ev: Event) {
 }
 
 async function onDrop(ev: DragEvent) {
-  const files = ev.dataTransfer?.files; if (!files) return
-  const input = document.createElement('input'); input.type = 'file'; Object.defineProperty(input, 'files', { value: files })
+  const files = ev.dataTransfer?.files
+  if (!files) return
+  const input = document.createElement('input')
+  input.type = 'file'
+  Object.defineProperty(input, 'files', { value: files })
   await onUpload({ target: input } as any)
 }
 
 const share = reactive({ open: false, password: '', link: '' as string | null, doc: null as null | StoredDoc })
-function openShare(d: StoredDoc) { share.doc = d; share.password = ''; share.link = null; share.open = true }
+function openShare(d: StoredDoc) {
+  share.doc = d
+  share.password = ''
+  share.link = null
+  share.open = true
+}
 async function generate() {
   if (!share.doc || !share.password) return
   const token = await sha256(share.password + ':' + share.doc.id)
@@ -222,5 +261,18 @@ async function generate() {
   url.searchParams.set('token', token)
   share.link = url.toString()
 }
-function removeDoc(id: string) { docs.value = docs.value.filter(d => d.id !== id) }
+function removeDoc(id: string) {
+  docs.value = docs.value.filter((d) => d.id !== id)
+}
+
+// Computed property to get route path avoiding TypeScript error with window in template
+const getSharePath = computed(() => {
+  if (!share.link) return '/'
+  try {
+    const url = new URL(share.link)
+    return url.pathname + url.search
+  } catch {
+    return '/'
+  }
+})
 </script>

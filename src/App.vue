@@ -3,7 +3,7 @@
     <header class="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">
       <div class="container mx-auto flex h-16 items-center justify-between px-6 md:px-8">
         <router-link to="/" class="flex items-center gap-2">
-          <img src="https://cdn.builder.io/api/v1/image/assets%2F7b550c72790748ccb7331938b8999d18%2F829e1fa6e6cb431eaa127364192122ea?format=webp&width=64" alt="DocuCloud" class="h-8 w-8" />
+          <img src="/public/Logo.png" alt="Logo DocuCloud" class="h-10 w-10" />
           <span class="font-extrabold tracking-tight text-xl">DocuCloud</span>
         </router-link>
         <nav class="hidden md:flex items-center gap-8 text-sm flex-1 ml-12">

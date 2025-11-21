@@ -35,7 +35,7 @@
         <div class="relative flex items-center justify-center">
           <div class="absolute -inset-8 bg-gradient-to-tr from-primary/30 to-accent/30 rounded-3xl blur-3xl opacity-60" aria-hidden />
           <div class="relative w-full aspect-square max-w-sm rounded-3xl border-2 border-primary/20 shadow-2xl overflow-hidden bg-white/80 backdrop-blur p-4">
-            <img src="/icon.svg" alt="Vista previa de DocuCloud" class="w-full h-full object-contain" />
+            <img src="/Logo2.png" alt="Vista previa de DocuCloud" class="w-full h-full object-contain" />
           </div>
         </div>
       </div>
